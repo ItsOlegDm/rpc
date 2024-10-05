@@ -5,7 +5,7 @@ import threading
 import time
 
 
-JELLYFIN_SERVER = "http://localhost:8096"
+JELLYFIN_SERVER = "http://192.168.1.115:8096"
 JELLYFIN_PUBLIC_SERVER = "https://jelly.itsolegdm.com"
 JELLY_ACCESS_TOKEN = ""
 JELLY_CLIENT_ID = "1289639826936565790"
@@ -48,15 +48,9 @@ def convert_external_links_to_buttons(input_list):
 
 def update_rpc():
     inactive_timer = 0
-    inactivity_threshold = 60
+    inactivity_threshold = 15
     rpc = Presence(JELLY_CLIENT_ID)
-    rpc_cleared = False
-
-    try:
-        rpc.connect()
-    except Exception as e:
-        print(f"Failed to connect to Discord RPC: {e}")
-        return
+    rpc_closed = True
 
     while True:
         try:
@@ -101,6 +95,9 @@ def update_rpc():
                             if progress and length:
                                 time_left = (length - progress) / 10_000_000
                             is_paused = session.get("PlayState").get("IsPaused")
+                            if rpc_closed:
+                                rpc.connect()
+                                rpc_closed = False
                             rpc.update(
                                 state=description,
                                 details=name,
@@ -112,18 +109,18 @@ def update_rpc():
 
                             has_playing_session = True
                             inactive_timer = 0
-                            rpc_cleared = False
                             break
 
             if not has_playing_session:
                 inactive_timer += 15
-                rpc.update()
-                if inactive_timer >= inactivity_threshold and not rpc_cleared:
-                    print("Disconnecting due to inactivity...")
+                if not rpc_closed:
                     rpc.clear()
-                    rpc.close()
-                    rpc_cleared = True
+                    if inactive_timer >= inactivity_threshold:
+                        print("Disconnecting due to inactivity...")
+                        rpc.close()
+                        rpc_closed = True
         except Exception as e:
+            raise e
             print(f"Error during playback check or Discord update: {e}")
 
         time.sleep(15)
