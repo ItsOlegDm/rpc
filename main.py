@@ -121,6 +121,7 @@ def update_rpc():
                 if inactive_timer >= inactivity_threshold and not rpc_cleared:
                     print("Disconnecting due to inactivity...")
                     rpc.clear()
+                    rpc.close()
                     rpc_cleared = True
         except Exception as e:
             print(f"Error during playback check or Discord update: {e}")
