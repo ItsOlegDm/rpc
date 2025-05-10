@@ -9,7 +9,6 @@ import json
 JELLYFIN_SERVER = "http://192.168.1.115:8096"
 JELLYFIN_PUBLIC_SERVER = "https://jelly.itsolegdm.com"
 JELLY_ACCESS_TOKEN = ""
-JELLY_CLIENT_ID = "1289639826936565790"
 JELLY_APP_ID = "1289639826936565790"
 JELLY_USERNAME = "ItsOlegDm"
 
@@ -148,18 +147,6 @@ def jelly_update_rpc():
 
 
 def pm_rpc():
-    rpc = Presence(PM_CLIENT_ID)
-    rpc.connect()
-    buttons = [
-                {
-                    "label": "AniList",
-                    "url": "https://anilist.co/anime/20872/Plastic-Memories"
-                },
-                {
-                    "label": "Shikimori",
-                    "url": "https://shikimori.one/animes/y27775-plastic-memories"
-                }
-            ]
     rpc = Presence(PM_APP_ID)
     start_time = load_start_time()
     if not start_time:
@@ -174,13 +161,6 @@ def pm_rpc():
             }
         ]
 
-    while True:
-        rpc.update(
-            state="- I hope one day you'll be reunited with the one you cherish...",
-            large_image=f"isla__{random.randint(0, 17)}",
-            buttons=buttons
-        )
-        time.sleep(900)
         while True:
             try:
                 rpc.update(
@@ -224,7 +204,7 @@ def get_current_listening_info_abs() -> dict:
                     "title": m.get("title") or "",
                     "series": m.get("series", [{}])[0].get("name") or "",
                     "author": s.get("displayAuthor") or "",
-                    "cover": ABS_SERVER + f"audiobookshelf/api/items/{s.get('libraryItemId')}/cover" if s.get("coverPath") and s.get('libraryItemId') else "",
+                    "cover": ABS_SERVER + f"/audiobookshelf/api/items/{s.get('libraryItemId')}/cover" if s.get("coverPath") and s.get('libraryItemId') else "",
                     "current_time": format_time(cur),
                     "duration": format_time(dur),
                     "start_time": start_ts,
@@ -256,6 +236,9 @@ def abs_update_rpc():
         if series:
             if series in title:
                 title = title.replace(series, "")
+                if any(title.startswith(x) for x in (" ", ",", ".")):
+                    title = title.lstrip(" ,.")
+                title = title.capitalize()
             if author:
                 series = f"{', '.join(author)}, {series}"
         else:
